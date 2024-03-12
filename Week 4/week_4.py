@@ -78,9 +78,15 @@ def perceptron(data, labels, params={}, hook=None):
     """
     T = params.get('T', 100)  # if T is not in params, default to 100
     (d, n) = data.shape
-
-    # Todo: Implement the Perceptron algorithm here.
-    pass
+    theta = np.zeros((d, 1))
+    theta_0 = 0
+    for t in range(T):
+        for i in range(n):
+            if labels[i] * (theta.T @ data[:, i] + theta_0) <= 0:
+                theta += labels[i] @ data[:, i]
+                theta_0 += labels[i]
+    return (theta, theta_0)
+    
 
 
 def plot_separator(plot_axes, theta, theta_0):
@@ -154,8 +160,8 @@ if __name__ == '__main__':
 
 
     # Run the RLC or Perceptron: (uncomment the following lines to call the learning algorithms)
-    theta, theta_0 = random_linear_classifier(X, y, {"k": 100}, hook=None)
-    # theta, theta_0 = perceptron(X, y, {"T": 100}, hook=None)
+    #theta, theta_0 = random_linear_classifier(X, y, {"k": 100}, hook=None)
+    theta, theta_0 = perceptron(X, y, {"T": 100}, hook=None)
     # Plot the returned separator:
     plot_separator(ax, theta, theta_0)
     
