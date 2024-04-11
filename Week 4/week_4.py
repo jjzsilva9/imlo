@@ -78,14 +78,18 @@ def perceptron(data, labels, params={}, hook=None):
     """
     T = params.get('T', 100)  # if T is not in params, default to 100
     (d, n) = data.shape
-    theta = np.zeros((d, 1))
+    theta = np.zeros((d))
     theta_0 = 0
     for t in range(T):
         for i in range(n):
-            if labels[i] * (theta.T @ data[:, i] + theta_0) <= 0:
-                theta += labels[i] @ data[:, i]
-                theta_0 += labels[i]
-    return (theta, theta_0)
+            x = data[:, i:i+1]
+            y = labels[:, i:i+1]
+            if (y * (theta.T @ x + theta_0)) <= 0:
+                theta = (theta + (y * x).flatten())
+                theta_0 += y
+            if hook: 
+                hook((theta, theta_0))
+    return theta, theta_0
     
 
 
@@ -168,18 +172,18 @@ if __name__ == '__main__':
 
     # Run the RLC, plot E_n over various k:
     # Todo: Your code
-    E_nbyk = [[], []]
-    for k in range(1, 100):
-        avg = 0
-        for i in range(10):
-            theta, theta_0 = random_linear_classifier(X, y, {"k": k}, hook=None)
-            avg += E_n(linear_classify, X, y, Loss, theta, theta_0)
-        avg/=10
-        E_nbyk[0].append(k)
-        E_nbyk[1].append(avg)
-    plt.clf()
-    plt.plot(E_nbyk[0], E_nbyk[1])
-    plt.show()
-    print("Finished.")
+    # E_nbyk = [[], []]
+    # for k in range(1, 100):
+    #     avg = 0
+    #     for i in range(10):
+    #         theta, theta_0 = random_linear_classifier(X, y, {"k": k}, hook=None)
+    #         avg += E_n(linear_classify, X, y, Loss, theta, theta_0)
+    #     avg/=10
+    #     E_nbyk[0].append(k)
+    #     E_nbyk[1].append(avg)
+    # plt.clf()
+    # plt.plot(E_nbyk[0], E_nbyk[1])
+    # plt.show()
+    # print("Finished.")
     input("end")
     
