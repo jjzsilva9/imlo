@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
 
 def linear_classify(x, theta, theta_0):
     """Uses the given theta, theta_0, to linearly classify the given data x. This is our hypothesis or hypothesis class.
@@ -67,7 +68,7 @@ def random_linear_classifier(data, labels, params={}, hook=None):
     return minErrorAns
 
 
-def perceptron(data, labels, params={}, hook=None):
+def perceptron_with_offset(data, labels, params={}, hook=None):
     """The Perceptron learning algorithm.
 
     :param data: A d x n matrix where d is the number of data dimensions and n the number of examples.
@@ -90,7 +91,39 @@ def perceptron(data, labels, params={}, hook=None):
             if hook: 
                 hook((theta, theta_0))
     return theta, theta_0
+
+def perceptron(data, labels, params={}, hook=None):
+    """The Perceptron learning algorithm.
+
+    :param data: A d x n matrix where d is the number of data dimensions and n the number of examples.
+    :param labels: A 1 x n matrix with the label (actual value) for each data point.
+    :param params: A dict, containing a key T, which is a positive integer number of steps to run
+    :param hook: An optional hook function that is called in each iteration of the algorithm.
+    :return:
+    """
+    T = params.get('T', 100)  # if T is not in params, default to 100
+    (d, n) = data.shape
+    theta = np.zeros((d))
+    for t in range(T):
+        for i in range(n):
+            x = data[:, i:i+1]
+            y = labels[:, i:i+1]
+            if (y * (theta.T @ x)) <= 0:
+                theta = (theta + (y * x).flatten())
+            if hook: 
+                hook((theta[:-1], theta[-1]))
+    return theta[:-1], theta[-1]
     
+def transform_polynomial_basis(x, order):
+    if order == 0:
+        return [1]
+    if order == 1:
+        return [val for val in x] + transform_polynomial_basis(x, order-1)
+    ans = []
+    for vals in itertools.product(*([x] * order)):
+        ans.append(np.prod(vals))
+    return ans + transform_polynomial_basis(x, order-1)
+     
 
 
 def plot_separator(plot_axes, theta, theta_0):
@@ -138,8 +171,9 @@ if __name__ == '__main__':
 
     # To test your algorithm on a larger dataset, uncomment the following code. It generates uniformly distributed
     # random data in 2D, along with their labels.
-    X = np.random.uniform(low=-5, high=5, size=(2, 20))  # d=2, n=20
-    y = np.sign(np.dot(np.transpose([[3], [4]]), X) + 6)  # theta=[3, 4], theta_0=6
+    #X = np.random.uniform(low=-5, high=5, size=(2, 20))  # d=2, n=20
+    #X = np.array([X[0], X[1], [1] * 20])
+    y = np.sign(np.dot(np.transpose([[3], [4]]), X))  # theta=[3, 4], theta_0=6
 
     # Plot positive data green, negative data red:
     colors = np.choose(y > 0, np.transpose(np.array(['r', 'g']))).flatten()
@@ -165,10 +199,10 @@ if __name__ == '__main__':
 
     # Run the RLC or Perceptron: (uncomment the following lines to call the learning algorithms)
     #theta, theta_0 = random_linear_classifier(X, y, {"k": 100}, hook=None)
-    theta, theta_0 = perceptron(X, y, {"T": 100}, hook=None)
+    theta, theta_0 = perceptron_with_offset(X, y, {"T": 100}, hook=None)
     # Plot the returned separator:
     plot_separator(ax, theta, theta_0)
-    
+    print(transform_polynomial_basis([1, 2, 3], 3))
 
     # Run the RLC, plot E_n over various k:
     # Todo: Your code
