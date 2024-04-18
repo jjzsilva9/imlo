@@ -123,12 +123,11 @@ if __name__ == '__main__':
         plt.plot(x, f, "rx")
 
     fig_simple.show()
-    a = input("halt")
 
     # Exercise 2: Least Squares Regression
     # -----------
     # Get some example data (browse the file to see the various data_* functions provided):
-    X, Y = data_linear_trivial()
+    X, Y = data_linear_offset()
 
     # Create a plot and set up some default plot options:
     fig, ax = plt.subplots()
@@ -144,33 +143,34 @@ if __name__ == '__main__':
     # ...
 
     # Todo: Feature transformation, add column of ones
-    X_augmented = None
+    X_augmented = np.c_[X, np.ones(len(X))]
 
     # Exercise 2.2: Todo: Compute theta* using the analytical OLS solution:
     # ------------
-    theta_star = None
-
+    theta_star = np.linalg.inv((X_augmented.T @ X_augmented)) @ (X_augmented.T @ Y)
+    print(theta_star)
     # Todo: Plot the resulting hypothesis into the plot:
-    # plot_line_2d(...)
-
+    plt.plot(X, Y, "rx")
+    plot_line_2d(ax, theta_star, "b")
+    plt.show()
     # Exercise 2.3 - Solution using gradient descent:
     # ------------
 
     # Todo: Implement the loss function:
     def squared_loss(x, y, theta):
-        return None
+        return (x @ theta - y)**2
 
     # Todo: Implement the OLS objective function (using the loss):
     def ols_objective(X, Y, theta):
-        return None
+        return np.mean(squared_loss(X, Y, theta))
 
     # Todo: Implement the partial derivative of the squared loss w.r.t. theta
     def d_squared_loss_theta(x, y, theta):
-        return None
+        return (2 * X.T) @ (X @ theta.T - Y)
 
     # Todo: Implement the partial derivative of the OLS objective w.r.t. theta (using the partial derivative of the squared loss):
     def d_ols_objective_theta(x, y, theta):
-        return None
+        return np.mean(d_squared_loss_theta(x, y, theta))
 
     # Finally, the gradient of our OLS objective is simply d_ols_objective_theta (as theta is our only parameter):
     def ols_objective_grad(X, Y, theta):
@@ -185,18 +185,20 @@ if __name__ == '__main__':
         return ols_objective_grad(X_augmented, Y, theta)
 
     # Todo: Set an initial value for theta_init:
-    theta_init = None
+    theta_init = np.array([[0], [0]])
 
     # We define a step size function - let's return a constant step size, independent of the iteration i:
     def step_size_fn(i):
-        return None  # Todo: Experiment with various step sizes
+        return 0.001  # Todo: Experiment with various step sizes
     # Now we're ready to run gradient descent to minimise f_ols:
-    last_x, fs, xs = gradient_descent(f_ols, df_ols, theta_init, step_size_fn=step_size_fn, max_iter=50)
-
+    last_x, fs, xs = gradient_descent(f_ols, df_ols, theta_init, step_size_fn=step_size_fn, max_iter=200)
+    print(last_x)
     # Todo: Plot the found hypothesis into the figure with the data.
     # Todo: Also plot individual steps of gradient descent, to see how the optimisation behaves.
-    # plot_line_2d(...)
-    # ...
+    plt.plot(X, Y, "rx")
+    plot_line_2d(ax, theta_star, "b")
+    plot_line_2d(ax, last_x, "r")
+    plt.show(block=True)
 
     # Exercise 2.3 iii):
     fig_loss, ax_loss = plt.subplots()  # Create an empty figure for the loss plot
