@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
 
 
 def gradient_descent(f, df, x0, step_size_fn, max_iter):
@@ -33,16 +34,14 @@ def transform_polynomial_basis_1d(x, order):
     :param order: Can be 0, 1, 2 or 3.
     :return: The transformed data point x as a list.
     """
-    if order==0:
+    if order == 0:
         return [1]
-    if order==1:
-        return [1, x]
-    if order==2:
-        # Todo: Implement the polynomial basis for k=2:
-        return None
-    if order==3:
-        # Todo: And for k=3:
-        return None
+    if order == 1:
+        return [val for val in x] + transform_polynomial_basis_1d(x, order-1)
+    ans = []
+    for vals in itertools.product(*([x] * order)):
+        ans.append(np.prod(vals))
+    return ans + transform_polynomial_basis_1d(x, order-1)
 
 
 def data_linear_trivial():
@@ -148,7 +147,7 @@ if __name__ == '__main__':
     # Exercise 2.2: Todo: Compute theta* using the analytical OLS solution:
     # ------------
     theta_star = np.linalg.inv((X_augmented.T @ X_augmented)) @ (X_augmented.T @ Y)
-    print(theta_star)
+    
     # Todo: Plot the resulting hypothesis into the plot:
     plt.plot(X, Y, "rx")
     plot_line_2d(ax, theta_star, "b")
@@ -162,7 +161,7 @@ if __name__ == '__main__':
 
     # Todo: Implement the OLS objective function (using the loss):
     def ols_objective(X, Y, theta):
-        return np.mean(squared_loss(X, Y, theta))
+        return 1/len(X[0]) * ((X @ theta - Y).T @ (X @ theta - Y))
 
     # Todo: Implement the partial derivative of the squared loss w.r.t. theta
     def d_squared_loss_theta(x, y, theta):
@@ -170,7 +169,7 @@ if __name__ == '__main__':
 
     # Todo: Implement the partial derivative of the OLS objective w.r.t. theta (using the partial derivative of the squared loss):
     def d_ols_objective_theta(x, y, theta):
-        return np.mean(d_squared_loss_theta(x, y, theta))
+        return (2/len(x[0]) * x.T) @ ((x @ theta) - y)
 
     # Finally, the gradient of our OLS objective is simply d_ols_objective_theta (as theta is our only parameter):
     def ols_objective_grad(X, Y, theta):
@@ -189,24 +188,57 @@ if __name__ == '__main__':
 
     # We define a step size function - let's return a constant step size, independent of the iteration i:
     def step_size_fn(i):
-        return 0.001  # Todo: Experiment with various step sizes
+        return 0.01  # Todo: Experiment with various step sizes
     # Now we're ready to run gradient descent to minimise f_ols:
-    last_x, fs, xs = gradient_descent(f_ols, df_ols, theta_init, step_size_fn=step_size_fn, max_iter=200)
-    print(last_x)
+    last_x, fs, xs = gradient_descent(f_ols, df_ols, theta_init, step_size_fn=step_size_fn, max_iter=100)
+    
     # Todo: Plot the found hypothesis into the figure with the data.
     # Todo: Also plot individual steps of gradient descent, to see how the optimisation behaves.
+    fig, ax = plt.subplots()
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_xlim(-15, 15)
+    ax.set_ylim(-15, 15)
+    ax.grid(True, which='both')
+    ax.axhline(color='black', linewidth=0.5)
+    ax.axvline(color='black', linewidth=0.5)
+    ax.set_title("Least squares regression")
     plt.plot(X, Y, "rx")
     plot_line_2d(ax, theta_star, "b")
+    for x in xs:
+        plot_line_2d(ax, x, "g")
     plot_line_2d(ax, last_x, "r")
-    plt.show(block=True)
+    plt.show()
 
     # Exercise 2.3 iii):
     fig_loss, ax_loss = plt.subplots()  # Create an empty figure for the loss plot
     # Todo: Plot the loss over the iterations
     # ... ax_loss.plot(...) ...
+    ax_loss.plot(range(len(xs)), [np.mean(squared_loss(X_augmented, Y, x)) for x in xs])
+    plt.show()
 
     # Optional: Exercise 2.4
     # Ex. 2.4 (b) iii): Plot the polynomial separator in 2D:
     # ...
 
+    X, Y = data_quadratic()
+    fig, ax = plt.subplots()
+    ax.plot(X, Y, "rx")
+    
+
+    X_augmented = np.c_[X, np.ones(len(X))]
+    last_x, fs, xs = gradient_descent(f_ols, df_ols, theta_init, step_size_fn=step_size_fn, max_iter=100)
+    
+    plot_line_2d(ax, last_x, "b")
+    plt.show(block=True)
+    print(np.mean(squared_loss(X_augmented, Y, last_x)))
+    
+    X_transformed = np.array([transform_polynomial_basis_1d(x, 2) for x in X])
+    X_augmented = X_transformed
+
+    theta_star = np.linalg.inv((X_augmented.T @ X_augmented)) @ (X_augmented.T @ Y)
+    print(np.mean(squared_loss(X_augmented, Y, theta_star)))
+
+    ax.plot(np.arange(-10, 10, 0.1), theta_star.T @ np.array([transform_polynomial_basis_1d(x, 2) for x in np.arange(-10, 10, 0.1)]))
+    plt.show(block=True)
     print("Finished.")
