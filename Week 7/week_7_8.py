@@ -231,14 +231,18 @@ if __name__ == '__main__':
     
     plot_line_2d(ax, last_x, "b")
     plt.show(block=True)
-    print(np.mean(squared_loss(X_augmented, Y, last_x)))
+    #print(np.mean(squared_loss(X_augmented, Y, last_x)))
     
     X_transformed = np.array([transform_polynomial_basis_1d(x, 2) for x in X])
     X_augmented = X_transformed
 
-    theta_star = np.linalg.inv((X_augmented.T @ X_augmented)) @ (X_augmented.T @ Y)
-    print(np.mean(squared_loss(X_augmented, Y, theta_star)))
+    theta_star = np.linalg.inv((X_transformed.T @ X_transformed)) @ (X_transformed.T @ Y)
+    #print(theta_star)
+    #print(np.mean(squared_loss(X_augmented, Y, theta_star)))
 
-    ax.plot(np.arange(-10, 10, 0.1), theta_star.T @ np.array([transform_polynomial_basis_1d(x, 2) for x in np.arange(-10, 10, 0.1)]))
+    fig, ax = plt.subplots()
+    ax.plot(X, Y, "rx")
+    
+    ax.plot(np.linspace(-10, 10, 100), (theta_star.T @ np.array([transform_polynomial_basis_1d([x], 2) for x in np.linspace(-10, 10, 100)]).T)[0])
     plt.show(block=True)
     print("Finished.")
